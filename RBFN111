@@ -1,0 +1,2316 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "RBFN.ipynb",
+      "provenance": [],
+      "collapsed_sections": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Nwi8aLBN36DQ"
+      },
+      "source": [
+        "# Import Libraries"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "3N4JnWnvHQYT"
+      },
+      "outputs": [],
+      "source": [
+        "import numpy as np\n",
+        "import pandas as pd\n",
+        "from sklearn import svm, metrics\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from sklearn.preprocessing import MinMaxScaler\n",
+        "import matplotlib.pyplot as plt\n",
+        "import seaborn as sns\n",
+        "\n",
+        "# Import label encoder\n",
+        "from sklearn import preprocessing"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "lDNii_RY4EqZ"
+      },
+      "source": [
+        "# Import Dataset"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "_5eS18qUP0uG"
+      },
+      "outputs": [],
+      "source": [
+        "data = pd.read_csv('CTG.csv')"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 235
+        },
+        "id": "PBC-st_8e78I",
+        "outputId": "080a601f-7515-44c5-f175-39ab303cf94f"
+      },
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "     LBE     LB   AC   FM   UC  ASTV  MSTV  ALTV  MLTV   DL  ...    Max  Nmax  \\\n",
+              "0  120.0  120.0  0.0  0.0  0.0  73.0   0.5  43.0   2.4  0.0  ...  126.0   2.0   \n",
+              "1  132.0  132.0  4.0  0.0  4.0  17.0   2.1   0.0  10.4  2.0  ...  198.0   6.0   \n",
+              "2  133.0  133.0  2.0  0.0  5.0  16.0   2.1   0.0  13.4  2.0  ...  198.0   5.0   \n",
+              "3  134.0  134.0  2.0  0.0  6.0  16.0   2.4   0.0  23.0  2.0  ...  170.0  11.0   \n",
+              "4  132.0  132.0  4.0  0.0  5.0  16.0   2.4   0.0  19.9  0.0  ...  170.0   9.0   \n",
+              "\n",
+              "   Nzeros   Mode   Mean  Median  Variance  Tendency  CLASS  NSP  \n",
+              "0     0.0  120.0  137.0   121.0      73.0       1.0    9.0  2.0  \n",
+              "1     1.0  141.0  136.0   140.0      12.0       0.0    6.0  1.0  \n",
+              "2     1.0  141.0  135.0   138.0      13.0       0.0    6.0  1.0  \n",
+              "3     0.0  137.0  134.0   137.0      13.0       1.0    6.0  1.0  \n",
+              "4     0.0  137.0  136.0   138.0      11.0       1.0    2.0  1.0  \n",
+              "\n",
+              "[5 rows x 24 columns]"
+            ],
+            "text/html": [
+              "\n",
+              "  <div id=\"df-665bed6c-e6c9-4e0d-8003-568976d920e2\">\n",
+              "    <div class=\"colab-df-container\">\n",
+              "      <div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>LBE</th>\n",
+              "      <th>LB</th>\n",
+              "      <th>AC</th>\n",
+              "      <th>FM</th>\n",
+              "      <th>UC</th>\n",
+              "      <th>ASTV</th>\n",
+              "      <th>MSTV</th>\n",
+              "      <th>ALTV</th>\n",
+              "      <th>MLTV</th>\n",
+              "      <th>DL</th>\n",
+              "      <th>...</th>\n",
+              "      <th>Max</th>\n",
+              "      <th>Nmax</th>\n",
+              "      <th>Nzeros</th>\n",
+              "      <th>Mode</th>\n",
+              "      <th>Mean</th>\n",
+              "      <th>Median</th>\n",
+              "      <th>Variance</th>\n",
+              "      <th>Tendency</th>\n",
+              "      <th>CLASS</th>\n",
+              "      <th>NSP</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>120.0</td>\n",
+              "      <td>120.0</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>73.0</td>\n",
+              "      <td>0.5</td>\n",
+              "      <td>43.0</td>\n",
+              "      <td>2.4</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>...</td>\n",
+              "      <td>126.0</td>\n",
+              "      <td>2.0</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>120.0</td>\n",
+              "      <td>137.0</td>\n",
+              "      <td>121.0</td>\n",
+              "      <td>73.0</td>\n",
+              "      <td>1.0</td>\n",
+              "      <td>9.0</td>\n",
+              "      <td>2.0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>132.0</td>\n",
+              "      <td>132.0</td>\n",
+              "      <td>4.0</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>4.0</td>\n",
+              "      <td>17.0</td>\n",
+              "      <td>2.1</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>10.4</td>\n",
+              "      <td>2.0</td>\n",
+              "      <td>...</td>\n",
+              "      <td>198.0</td>\n",
+              "      <td>6.0</td>\n",
+              "      <td>1.0</td>\n",
+              "      <td>141.0</td>\n",
+              "      <td>136.0</td>\n",
+              "      <td>140.0</td>\n",
+              "      <td>12.0</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>6.0</td>\n",
+              "      <td>1.0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>133.0</td>\n",
+              "      <td>133.0</td>\n",
+              "      <td>2.0</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>5.0</td>\n",
+              "      <td>16.0</td>\n",
+              "      <td>2.1</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>13.4</td>\n",
+              "      <td>2.0</td>\n",
+              "      <td>...</td>\n",
+              "      <td>198.0</td>\n",
+              "      <td>5.0</td>\n",
+              "      <td>1.0</td>\n",
+              "      <td>141.0</td>\n",
+              "      <td>135.0</td>\n",
+              "      <td>138.0</td>\n",
+              "      <td>13.0</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>6.0</td>\n",
+              "      <td>1.0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>134.0</td>\n",
+              "      <td>134.0</td>\n",
+              "      <td>2.0</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>6.0</td>\n",
+              "      <td>16.0</td>\n",
+              "      <td>2.4</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>23.0</td>\n",
+              "      <td>2.0</td>\n",
+              "      <td>...</td>\n",
+              "      <td>170.0</td>\n",
+              "      <td>11.0</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>137.0</td>\n",
+              "      <td>134.0</td>\n",
+              "      <td>137.0</td>\n",
+              "      <td>13.0</td>\n",
+              "      <td>1.0</td>\n",
+              "      <td>6.0</td>\n",
+              "      <td>1.0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>132.0</td>\n",
+              "      <td>132.0</td>\n",
+              "      <td>4.0</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>5.0</td>\n",
+              "      <td>16.0</td>\n",
+              "      <td>2.4</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>19.9</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>...</td>\n",
+              "      <td>170.0</td>\n",
+              "      <td>9.0</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>137.0</td>\n",
+              "      <td>136.0</td>\n",
+              "      <td>138.0</td>\n",
+              "      <td>11.0</td>\n",
+              "      <td>1.0</td>\n",
+              "      <td>2.0</td>\n",
+              "      <td>1.0</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "<p>5 rows × 24 columns</p>\n",
+              "</div>\n",
+              "      <button class=\"colab-df-convert\" onclick=\"convertToInteractive('df-665bed6c-e6c9-4e0d-8003-568976d920e2')\"\n",
+              "              title=\"Convert this dataframe to an interactive table.\"\n",
+              "              style=\"display:none;\">\n",
+              "        \n",
+              "  <svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\"viewBox=\"0 0 24 24\"\n",
+              "       width=\"24px\">\n",
+              "    <path d=\"M0 0h24v24H0V0z\" fill=\"none\"/>\n",
+              "    <path d=\"M18.56 5.44l.94 2.06.94-2.06 2.06-.94-2.06-.94-.94-2.06-.94 2.06-2.06.94zm-11 1L8.5 8.5l.94-2.06 2.06-.94-2.06-.94L8.5 2.5l-.94 2.06-2.06.94zm10 10l.94 2.06.94-2.06 2.06-.94-2.06-.94-.94-2.06-.94 2.06-2.06.94z\"/><path d=\"M17.41 7.96l-1.37-1.37c-.4-.4-.92-.59-1.43-.59-.52 0-1.04.2-1.43.59L10.3 9.45l-7.72 7.72c-.78.78-.78 2.05 0 2.83L4 21.41c.39.39.9.59 1.41.59.51 0 1.02-.2 1.41-.59l7.78-7.78 2.81-2.81c.8-.78.8-2.07 0-2.86zM5.41 20L4 18.59l7.72-7.72 1.47 1.35L5.41 20z\"/>\n",
+              "  </svg>\n",
+              "      </button>\n",
+              "      \n",
+              "  <style>\n",
+              "    .colab-df-container {\n",
+              "      display:flex;\n",
+              "      flex-wrap:wrap;\n",
+              "      gap: 12px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert {\n",
+              "      background-color: #E8F0FE;\n",
+              "      border: none;\n",
+              "      border-radius: 50%;\n",
+              "      cursor: pointer;\n",
+              "      display: none;\n",
+              "      fill: #1967D2;\n",
+              "      height: 32px;\n",
+              "      padding: 0 0 0 0;\n",
+              "      width: 32px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert:hover {\n",
+              "      background-color: #E2EBFA;\n",
+              "      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);\n",
+              "      fill: #174EA6;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert {\n",
+              "      background-color: #3B4455;\n",
+              "      fill: #D2E3FC;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert:hover {\n",
+              "      background-color: #434B5C;\n",
+              "      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);\n",
+              "      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));\n",
+              "      fill: #FFFFFF;\n",
+              "    }\n",
+              "  </style>\n",
+              "\n",
+              "      <script>\n",
+              "        const buttonEl =\n",
+              "          document.querySelector('#df-665bed6c-e6c9-4e0d-8003-568976d920e2 button.colab-df-convert');\n",
+              "        buttonEl.style.display =\n",
+              "          google.colab.kernel.accessAllowed ? 'block' : 'none';\n",
+              "\n",
+              "        async function convertToInteractive(key) {\n",
+              "          const element = document.querySelector('#df-665bed6c-e6c9-4e0d-8003-568976d920e2');\n",
+              "          const dataTable =\n",
+              "            await google.colab.kernel.invokeFunction('convertToInteractive',\n",
+              "                                                     [key], {});\n",
+              "          if (!dataTable) return;\n",
+              "\n",
+              "          const docLinkHtml = 'Like what you see? Visit the ' +\n",
+              "            '<a target=\"_blank\" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'\n",
+              "            + ' to learn more about interactive tables.';\n",
+              "          element.innerHTML = '';\n",
+              "          dataTable['output_type'] = 'display_data';\n",
+              "          await google.colab.output.renderOutput(dataTable, element);\n",
+              "          const docLink = document.createElement('div');\n",
+              "          docLink.innerHTML = docLinkHtml;\n",
+              "          element.appendChild(docLink);\n",
+              "        }\n",
+              "      </script>\n",
+              "    </div>\n",
+              "  </div>\n",
+              "  "
+            ]
+          },
+          "metadata": {},
+          "execution_count": 3
+        }
+      ],
+      "source": [
+        "data = data.drop(['FileName','Date','SegFile','A','B','C','D','E','AD','DE','LD','FS','SUSP','DR','b','e'],axis=1)\n",
+        "data.head()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "kfh3CyMEfAR2",
+        "outputId": "1e816e87-c9a8-4a84-c3a6-7154040382b9"
+      },
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "LBE         3\n",
+              "LB          3\n",
+              "AC          3\n",
+              "FM          2\n",
+              "UC          2\n",
+              "ASTV        2\n",
+              "MSTV        2\n",
+              "ALTV        2\n",
+              "MLTV        2\n",
+              "DL          1\n",
+              "DS          1\n",
+              "DP          1\n",
+              "Width       3\n",
+              "Min         3\n",
+              "Max         3\n",
+              "Nmax        3\n",
+              "Nzeros      3\n",
+              "Mode        3\n",
+              "Mean        3\n",
+              "Median      3\n",
+              "Variance    3\n",
+              "Tendency    3\n",
+              "CLASS       3\n",
+              "NSP         3\n",
+              "dtype: int64"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 4
+        }
+      ],
+      "source": [
+        "data.isnull().sum()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "LDg_MKghfC_s"
+      },
+      "outputs": [],
+      "source": [
+        "data = data.dropna()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "3lzVfUPJczkM",
+        "outputId": "7525ed3d-7956-45a1-986a-0923737ed293"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Q1= 0.0\n",
+            "Q2= 1.0\n",
+            "Q3= 4.0\n",
+            "Interquartile range is 4.0\n",
+            "low_limit is -6.0\n",
+            "up_limit is 10.0\n",
+            "outlier in the dataset is [12.0, 11.0, 13.0, 12.0, 11.0, 15.0, 11.0, 13.0, 12.0, 17.0, 13.0, 11.0, 17.0, 11.0, 18.0, 12.0, 11.0, 11.0, 13.0, 16.0, 14.0, 14.0, 12.0, 11.0, 13.0, 12.0, 14.0, 12.0, 14.0, 12.0, 12.0, 11.0, 12.0, 12.0, 19.0, 19.0, 13.0, 17.0, 13.0, 13.0, 15.0, 12.0, 14.0, 26.0, 18.0, 12.0, 17.0, 13.0, 14.0, 13.0, 17.0, 14.0, 14.0, 14.0, 11.0, 11.0, 12.0, 13.0, 11.0, 11.0, 14.0, 13.0, 14.0, 11.0, 15.0, 13.0, 15.0, 14.0, 13.0, 12.0, 15.0, 14.0, 16.0, 13.0, 12.0, 17.0, 17.0, 16.0, 16.0, 11.0, 12.0, 11.0, 21.0]\n",
+            "outlier in the dataset after capping is []\n"
+          ]
+        }
+      ],
+      "source": [
+        "Q1 = np.percentile(data['AC'],25)\n",
+        "Q2 = np.percentile(data['AC'],50)\n",
+        "Q3 = np.percentile(data['AC'],75)\n",
+        "print('Q1=',Q1)\n",
+        "print('Q2=',Q2)\n",
+        "print('Q3=',Q3)\n",
+        "IQR = Q3 - Q1\n",
+        "print('Interquartile range is', IQR)\n",
+        "low_lim = Q1 - 1.5 * IQR\n",
+        "up_lim = Q3 + 1.5 * IQR\n",
+        "print('low_limit is',low_lim)\n",
+        "print('up_limit is',up_lim)\n",
+        "outlier = []\n",
+        "for x in data['AC']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset is', outlier)\n",
+        "data['AC'] = np.where(data['AC']>up_lim, up_lim, data['AC']) \n",
+        "data['AC'] = np.where(data['AC']<low_lim, low_lim, data['AC'])\n",
+        "outlier = []\n",
+        "for x in data['AC']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset after capping is', outlier)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "aGnr8B5GdTLj",
+        "outputId": "aa645b21-1ac3-4058-f55e-f611dfb3f2ce"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Q1= 0.0\n",
+            "Q2= 0.0\n",
+            "Q3= 2.0\n",
+            "Interquartile range is 2.0\n",
+            "low_limit is -3.0\n",
+            "up_limit is 5.0\n",
+            "outlier in the dataset is [57.0, 147.0, 489.0, 273.0, 290.0, 251.0, 317.0, 557.0, 304.0, 272.0, 219.0, 162.0, 65.0, 129.0, 79.0, 64.0, 123.0, 56.0, 90.0, 95.0, 52.0, 54.0, 69.0, 31.0, 25.0, 9.0, 14.0, 14.0, 6.0, 7.0, 6.0, 20.0, 20.0, 47.0, 10.0, 8.0, 35.0, 24.0, 44.0, 34.0, 6.0, 9.0, 16.0, 7.0, 10.0, 8.0, 9.0, 10.0, 18.0, 6.0, 12.0, 7.0, 9.0, 19.0, 9.0, 6.0, 7.0, 9.0, 6.0, 7.0, 6.0, 6.0, 6.0, 8.0, 6.0, 8.0, 10.0, 12.0, 7.0, 6.0, 16.0, 9.0, 18.0, 10.0, 13.0, 12.0, 14.0, 10.0, 22.0, 13.0, 20.0, 13.0, 7.0, 6.0, 17.0, 14.0, 26.0, 10.0, 26.0, 10.0, 9.0, 8.0, 18.0, 15.0, 10.0, 15.0, 6.0, 19.0, 15.0, 14.0, 6.0, 12.0, 9.0, 12.0, 11.0, 6.0, 11.0, 6.0, 6.0, 15.0, 12.0, 9.0, 8.0, 12.0, 9.0, 8.0, 11.0, 28.0, 12.0, 15.0, 16.0, 15.0, 42.0, 40.0, 20.0, 50.0, 39.0, 11.0, 26.0, 26.0, 7.0, 6.0, 6.0, 6.0, 46.0, 8.0, 8.0, 70.0, 42.0, 62.0, 60.0, 23.0, 21.0, 110.0, 54.0, 98.0, 67.0, 18.0, 13.0, 16.0, 10.0, 10.0, 10.0, 42.0, 23.0, 17.0, 31.0, 29.0, 26.0, 32.0, 21.0, 19.0, 11.0, 75.0, 43.0, 24.0, 31.0, 32.0, 33.0, 18.0, 10.0, 8.0, 6.0, 9.0, 23.0, 18.0, 6.0, 7.0, 7.0, 10.0, 6.0, 11.0, 10.0, 7.0, 22.0, 11.0, 10.0, 20.0, 13.0, 25.0, 20.0, 7.0, 8.0, 8.0, 15.0, 15.0, 8.0, 170.0, 146.0, 167.0, 156.0, 104.0, 142.0, 489.0, 173.0, 265.0, 286.0, 564.0, 314.0, 324.0, 273.0, 443.0, 214.0, 325.0, 325.0, 193.0, 107.0, 110.0, 66.0, 6.0, 7.0, 8.0, 19.0, 10.0, 27.0, 19.0, 10.0, 8.0, 15.0, 13.0, 11.0, 8.0, 50.0, 22.0, 36.0, 41.0, 6.0, 6.0, 14.0, 10.0, 16.0, 7.0, 9.0, 8.0, 10.0, 8.0, 7.0, 7.0, 7.0, 6.0, 12.0, 7.0, 10.0, 8.0, 11.0, 7.0, 12.0, 10.0, 8.0, 6.0, 8.0, 11.0, 6.0, 11.0, 8.0, 11.0, 6.0, 10.0, 7.0, 12.0, 20.0, 19.0, 16.0, 16.0, 15.0, 40.0, 44.0, 32.0, 29.0, 52.0, 29.0, 46.0, 45.0, 42.0, 67.0, 62.0, 32.0, 63.0, 69.0, 44.0, 49.0, 6.0, 6.0, 6.0, 6.0, 7.0, 7.0, 7.0, 7.0, 7.0, 13.0, 13.0, 6.0, 8.0, 7.0, 7.0, 10.0, 7.0, 8.0, 8.0]\n",
+            "outlier in the dataset after capping is []\n"
+          ]
+        }
+      ],
+      "source": [
+        "Q1 = np.percentile(data['FM'],25)\n",
+        "Q2 = np.percentile(data['FM'],50)\n",
+        "Q3 = np.percentile(data['FM'],75)\n",
+        "print('Q1=',Q1)\n",
+        "print('Q2=',Q2)\n",
+        "print('Q3=',Q3)\n",
+        "IQR = Q3 - Q1\n",
+        "print('Interquartile range is', IQR)\n",
+        "low_lim = Q1 - 1.5 * IQR\n",
+        "up_lim = Q3 + 1.5 * IQR\n",
+        "print('low_limit is',low_lim)\n",
+        "print('up_limit is',up_lim)\n",
+        "outlier = []\n",
+        "for x in data['FM']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset is', outlier)\n",
+        "data['FM'] = np.where(data['FM']>up_lim, up_lim, data['FM']) \n",
+        "data['FM'] = np.where(data['FM']<low_lim, low_lim, data['FM'])\n",
+        "outlier = []\n",
+        "for x in data['FM']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset after capping is', outlier)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "XZWK960RlYkP",
+        "outputId": "afde620a-abd8-4880-da8b-1807192991f1"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Q1= 1.0\n",
+            "Q2= 3.0\n",
+            "Q3= 5.0\n",
+            "Interquartile range is 4.0\n",
+            "low_limit is -5.0\n",
+            "up_limit is 11.0\n",
+            "outlier in the dataset is [12.0, 17.0, 13.0, 12.0, 12.0, 13.0, 14.0, 15.0, 13.0, 14.0, 16.0, 12.0, 12.0, 12.0, 12.0, 13.0, 13.0, 14.0, 12.0, 13.0, 12.0, 23.0]\n",
+            "outlier in the dataset after capping is []\n"
+          ]
+        }
+      ],
+      "source": [
+        "Q1 = np.percentile(data['UC'],25)\n",
+        "Q2 = np.percentile(data['UC'],50)\n",
+        "Q3 = np.percentile(data['UC'],75)\n",
+        "print('Q1=',Q1)\n",
+        "print('Q2=',Q2)\n",
+        "print('Q3=',Q3)\n",
+        "IQR = Q3 - Q1\n",
+        "print('Interquartile range is', IQR)\n",
+        "low_lim = Q1 - 1.5 * IQR\n",
+        "up_lim = Q3 + 1.5 * IQR\n",
+        "print('low_limit is',low_lim)\n",
+        "print('up_limit is',up_lim)\n",
+        "outlier = []\n",
+        "for x in data['UC']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset is', outlier)\n",
+        "data['UC'] = np.where(data['UC']>up_lim, up_lim, data['UC']) \n",
+        "data['UC'] = np.where(data['UC']<low_lim, low_lim, data['UC'])\n",
+        "outlier = []\n",
+        "for x in data['UC']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset after capping is', outlier)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "OyYAhZsUmRLy",
+        "outputId": "30db5afa-c2d4-4cb4-dde5-17714e9ccf26"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Q1= 0.7\n",
+            "Q2= 1.2\n",
+            "Q3= 1.7\n",
+            "Interquartile range is 1.0\n",
+            "low_limit is -0.8\n",
+            "up_limit is 3.2\n",
+            "outlier in the dataset is [5.9, 6.3, 4.4, 6.0, 4.5, 6.9, 3.4, 3.7, 3.4, 3.6, 4.4, 4.7, 4.9, 5.0, 7.0, 4.1, 5.4, 3.9, 5.2, 4.8, 4.3, 3.7, 5.3, 4.8, 3.4, 3.3, 3.4, 3.4, 3.8, 3.7, 5.7, 4.9, 5.0, 4.0, 5.4, 3.5, 3.4, 3.4, 3.8, 3.8, 4.1, 4.9, 6.3, 4.5, 3.6, 3.3, 3.4, 3.6, 3.5, 3.8, 3.4, 3.4, 3.8, 4.2, 3.3, 3.6, 3.4, 3.3, 3.5, 4.0, 3.8, 3.4, 3.3, 3.3, 4.3, 3.9, 3.3, 4.2, 4.1, 4.2]\n",
+            "outlier in the dataset after capping is []\n"
+          ]
+        }
+      ],
+      "source": [
+        "Q1 = np.percentile(data['MSTV'],25)\n",
+        "Q2 = np.percentile(data['MSTV'],50)\n",
+        "Q3 = np.percentile(data['MSTV'],75)\n",
+        "print('Q1=',Q1)\n",
+        "print('Q2=',Q2)\n",
+        "print('Q3=',Q3)\n",
+        "IQR = Q3 - Q1\n",
+        "print('Interquartile range is', IQR)\n",
+        "low_lim = Q1 - 1.5 * IQR\n",
+        "up_lim = Q3 + 1.5 * IQR\n",
+        "print('low_limit is',low_lim)\n",
+        "print('up_limit is',up_lim)\n",
+        "outlier = []\n",
+        "for x in data['MSTV']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset is', outlier)\n",
+        "data['MSTV'] = np.where(data['MSTV']>up_lim, up_lim, data['MSTV']) \n",
+        "data['MSTV'] = np.where(data['MSTV']<low_lim, low_lim, data['MSTV'])\n",
+        "outlier = []\n",
+        "for x in data['MSTV']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset after capping is', outlier)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "yXbkvz6zmmNZ",
+        "outputId": "6da8216e-79a8-45a6-d5c1-350bbc5543ad"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Q1= 0.0\n",
+            "Q2= 0.0\n",
+            "Q3= 11.0\n",
+            "Interquartile range is 11.0\n",
+            "low_limit is -16.5\n",
+            "up_limit is 27.5\n",
+            "outlier in the dataset is [43.0, 79.0, 72.0, 71.0, 40.0, 69.0, 54.0, 53.0, 38.0, 29.0, 37.0, 29.0, 67.0, 68.0, 75.0, 74.0, 30.0, 49.0, 39.0, 31.0, 32.0, 34.0, 38.0, 31.0, 58.0, 39.0, 46.0, 57.0, 75.0, 29.0, 33.0, 40.0, 51.0, 37.0, 34.0, 34.0, 54.0, 58.0, 52.0, 32.0, 38.0, 59.0, 78.0, 84.0, 71.0, 59.0, 52.0, 62.0, 39.0, 45.0, 30.0, 45.0, 35.0, 67.0, 72.0, 45.0, 58.0, 32.0, 41.0, 61.0, 56.0, 84.0, 56.0, 84.0, 44.0, 39.0, 71.0, 71.0, 61.0, 67.0, 81.0, 42.0, 57.0, 56.0, 61.0, 77.0, 67.0, 88.0, 91.0, 78.0, 84.0, 47.0, 41.0, 59.0, 55.0, 61.0, 49.0, 49.0, 82.0, 86.0, 29.0, 67.0, 78.0, 84.0, 60.0, 68.0, 30.0, 32.0, 41.0, 28.0, 38.0, 29.0, 49.0, 35.0, 62.0, 68.0, 70.0, 47.0, 48.0, 51.0, 31.0, 43.0, 50.0, 47.0, 71.0, 48.0, 39.0, 39.0, 38.0, 31.0, 31.0, 34.0, 28.0, 29.0, 38.0, 32.0, 37.0, 32.0, 37.0, 36.0, 28.0, 28.0, 31.0, 40.0, 72.0, 85.0, 64.0, 58.0, 66.0, 91.0, 90.0, 54.0, 70.0, 77.0, 58.0, 81.0, 29.0, 40.0, 38.0, 54.0, 73.0, 43.0, 50.0, 42.0, 53.0, 64.0, 41.0, 34.0, 33.0, 34.0, 37.0, 44.0, 62.0, 29.0, 69.0, 72.0, 91.0, 90.0, 84.0, 42.0, 91.0, 66.0, 40.0, 34.0, 32.0, 30.0, 32.0, 38.0, 32.0, 45.0, 32.0, 32.0, 32.0, 31.0, 33.0, 39.0, 39.0, 44.0, 55.0, 41.0, 33.0, 31.0, 32.0, 32.0, 35.0, 53.0, 44.0, 31.0, 33.0, 57.0, 50.0, 64.0, 59.0, 67.0, 62.0, 71.0, 74.0, 59.0, 48.0, 45.0, 62.0, 59.0, 50.0, 61.0, 39.0, 43.0, 56.0, 62.0, 53.0, 44.0, 48.0, 61.0, 54.0, 37.0, 58.0, 40.0, 30.0, 37.0, 42.0, 28.0, 47.0, 48.0, 28.0, 43.0, 38.0, 28.0, 39.0, 32.0, 61.0, 48.0, 35.0, 34.0, 45.0, 49.0, 42.0, 33.0, 32.0, 32.0, 31.0, 33.0, 35.0, 32.0, 31.0, 28.0, 33.0, 36.0, 49.0, 52.0, 46.0, 41.0, 37.0, 54.0, 60.0, 62.0, 59.0, 62.0, 56.0, 49.0, 38.0, 32.0, 45.0, 30.0, 44.0, 30.0, 46.0, 37.0, 40.0, 54.0, 65.0, 46.0, 34.0, 44.0, 46.0, 55.0, 58.0, 59.0, 64.0, 60.0, 61.0, 73.0, 71.0, 67.0, 63.0, 52.0, 58.0, 35.0, 28.0, 73.0, 70.0, 59.0, 44.0, 34.0, 29.0, 40.0, 36.0, 33.0, 48.0, 36.0, 36.0]\n",
+            "outlier in the dataset after capping is []\n"
+          ]
+        }
+      ],
+      "source": [
+        "Q1 = np.percentile(data['ALTV'],25)\n",
+        "Q2 = np.percentile(data['ALTV'],50)\n",
+        "Q3 = np.percentile(data['ALTV'],75)\n",
+        "print('Q1=',Q1)\n",
+        "print('Q2=',Q2)\n",
+        "print('Q3=',Q3)\n",
+        "IQR = Q3 - Q1\n",
+        "print('Interquartile range is', IQR)\n",
+        "low_lim = Q1 - 1.5 * IQR\n",
+        "up_lim = Q3 + 1.5 * IQR\n",
+        "print('low_limit is',low_lim)\n",
+        "print('up_limit is',up_lim)\n",
+        "outlier = []\n",
+        "for x in data['ALTV']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset is', outlier)\n",
+        "data['ALTV'] = np.where(data['ALTV']>up_lim, up_lim, data['ALTV']) \n",
+        "data['ALTV'] = np.where(data['ALTV']<low_lim, low_lim, data['ALTV'])\n",
+        "outlier = []\n",
+        "for x in data['ALTV']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset after capping is', outlier)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "2NbZENYpnC7x",
+        "outputId": "33b3e902-b361-4f2b-a826-0334ebedbe8b"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Q1= 4.6\n",
+            "Q2= 7.4\n",
+            "Q3= 10.8\n",
+            "Interquartile range is 6.200000000000001\n",
+            "low_limit is -4.700000000000001\n",
+            "up_limit is 20.1\n",
+            "outlier in the dataset is [23.0, 27.6, 29.5, 21.7, 24.2, 22.1, 21.1, 22.2, 22.3, 21.3, 25.9, 23.4, 26.3, 35.7, 41.8, 50.7, 25.8, 23.3, 28.4, 21.4, 20.5, 29.6, 29.3, 23.1, 34.7, 21.7, 27.3, 20.5, 26.3, 24.7, 21.5, 27.3, 25.6, 26.1, 36.9, 27.6, 29.0, 28.0, 21.7, 23.8, 40.8, 21.5, 25.8, 21.4, 21.3, 25.2, 21.9, 20.8, 21.3, 22.3, 24.1, 22.5, 27.0, 23.4, 20.4, 29.1, 28.9, 21.1, 20.8, 25.3, 22.7, 24.9, 25.1, 25.4, 23.1, 23.6, 21.3, 33.5, 27.4, 26.1, 21.0]\n",
+            "outlier in the dataset after capping is []\n"
+          ]
+        }
+      ],
+      "source": [
+        "Q1 = np.percentile(data['MLTV'],25)\n",
+        "Q2 = np.percentile(data['MLTV'],50)\n",
+        "Q3 = np.percentile(data['MLTV'],75)\n",
+        "print('Q1=',Q1)\n",
+        "print('Q2=',Q2)\n",
+        "print('Q3=',Q3)\n",
+        "IQR = Q3 - Q1\n",
+        "print('Interquartile range is', IQR)\n",
+        "low_lim = Q1 - 1.5 * IQR\n",
+        "up_lim = Q3 + 1.5 * IQR\n",
+        "print('low_limit is',low_lim)\n",
+        "print('up_limit is',up_lim)\n",
+        "outlier = []\n",
+        "for x in data['MLTV']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset is', outlier)\n",
+        "data['MLTV'] = np.where(data['MLTV']>up_lim, up_lim, data['MLTV']) \n",
+        "data['MLTV'] = np.where(data['MLTV']<low_lim, low_lim, data['MLTV'])\n",
+        "outlier = []\n",
+        "for x in data['MLTV']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset after capping is', outlier)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "KZLm4O8MnTqf",
+        "outputId": "95172eda-b180-4fa5-f0ed-c9a864f01ce1"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Q1= 0.0\n",
+            "Q2= 0.0\n",
+            "Q3= 3.0\n",
+            "Interquartile range is 3.0\n",
+            "low_limit is -4.5\n",
+            "up_limit is 7.5\n",
+            "outlier in the dataset is [9.0, 10.0, 8.0, 12.0, 10.0, 8.0, 11.0, 9.0, 8.0, 8.0, 9.0, 9.0, 11.0, 11.0, 9.0, 8.0, 8.0, 12.0, 8.0, 9.0, 8.0, 9.0, 12.0, 14.0, 11.0, 12.0, 9.0, 14.0, 9.0, 8.0, 8.0, 8.0, 8.0, 8.0, 11.0, 11.0, 8.0, 9.0, 9.0, 11.0, 8.0, 11.0, 12.0, 16.0, 10.0, 9.0, 9.0, 11.0, 11.0, 10.0, 9.0, 8.0, 8.0, 8.0, 9.0, 8.0, 8.0, 9.0, 9.0, 8.0, 9.0, 8.0, 8.0, 11.0, 8.0, 8.0, 9.0, 8.0, 9.0, 10.0, 8.0, 8.0, 9.0, 9.0, 9.0, 9.0, 12.0, 10.0, 11.0, 10.0, 9.0]\n",
+            "outlier in the dataset after capping is []\n"
+          ]
+        }
+      ],
+      "source": [
+        "Q1 = np.percentile(data['DL'],25)\n",
+        "Q2 = np.percentile(data['DL'],50)\n",
+        "Q3 = np.percentile(data['DL'],75)\n",
+        "print('Q1=',Q1)\n",
+        "print('Q2=',Q2)\n",
+        "print('Q3=',Q3)\n",
+        "IQR = Q3 - Q1\n",
+        "print('Interquartile range is', IQR)\n",
+        "low_lim = Q1 - 1.5 * IQR\n",
+        "up_lim = Q3 + 1.5 * IQR\n",
+        "print('low_limit is',low_lim)\n",
+        "print('up_limit is',up_lim)\n",
+        "outlier = []\n",
+        "for x in data['DL']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset is', outlier)\n",
+        "data['DL'] = np.where(data['DL']>up_lim, up_lim, data['DL']) \n",
+        "data['DL'] = np.where(data['DL']<low_lim, low_lim, data['DL'])\n",
+        "outlier = []\n",
+        "for x in data['DL']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset after capping is', outlier)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "OS9ot9dcnu-y",
+        "outputId": "7a1461a2-6d0b-4c08-bcbe-dfb36e8698b4"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Q1= 0.0\n",
+            "Q2= 0.0\n",
+            "Q3= 0.0\n",
+            "Interquartile range is 0.0\n",
+            "low_limit is 0.0\n",
+            "up_limit is 0.0\n",
+            "outlier in the dataset is [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]\n",
+            "outlier in the dataset after capping is []\n"
+          ]
+        }
+      ],
+      "source": [
+        "Q1 = np.percentile(data['DS'],25)\n",
+        "Q2 = np.percentile(data['DS'],50)\n",
+        "Q3 = np.percentile(data['DS'],75)\n",
+        "print('Q1=',Q1)\n",
+        "print('Q2=',Q2)\n",
+        "print('Q3=',Q3)\n",
+        "IQR = Q3 - Q1\n",
+        "print('Interquartile range is', IQR)\n",
+        "low_lim = Q1 - 1.5 * IQR\n",
+        "up_lim = Q3 + 1.5 * IQR\n",
+        "print('low_limit is',low_lim)\n",
+        "print('up_limit is',up_lim)\n",
+        "outlier = []\n",
+        "for x in data['DS']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset is', outlier)\n",
+        "data['DS'] = np.where(data['DS']>up_lim, up_lim, data['DS']) \n",
+        "data['DS'] = np.where(data['DS']<low_lim, low_lim, data['DS'])\n",
+        "outlier = []\n",
+        "for x in data['DS']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset after capping is', outlier)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "MsSiDUuvn6Yq",
+        "outputId": "8f61e742-9b0d-4bb4-8774-ec5bba725ff9"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Q1= 0.0\n",
+            "Q2= 0.0\n",
+            "Q3= 0.0\n",
+            "Interquartile range is 0.0\n",
+            "low_limit is 0.0\n",
+            "up_limit is 0.0\n",
+            "outlier in the dataset is [2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 3.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 3.0, 3.0, 3.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0, 3.0, 3.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.0, 2.0, 3.0, 3.0, 4.0, 1.0, 3.0, 3.0, 2.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 3.0, 2.0, 2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 1.0, 1.0, 1.0]\n",
+            "outlier in the dataset after capping is []\n"
+          ]
+        }
+      ],
+      "source": [
+        "Q1 = np.percentile(data['DP'],25)\n",
+        "Q2 = np.percentile(data['DP'],50)\n",
+        "Q3 = np.percentile(data['DP'],75)\n",
+        "print('Q1=',Q1)\n",
+        "print('Q2=',Q2)\n",
+        "print('Q3=',Q3)\n",
+        "IQR = Q3 - Q1\n",
+        "print('Interquartile range is', IQR)\n",
+        "low_lim = Q1 - 1.5 * IQR\n",
+        "up_lim = Q3 + 1.5 * IQR\n",
+        "print('low_limit is',low_lim)\n",
+        "print('up_limit is',up_lim)\n",
+        "outlier = []\n",
+        "for x in data['DP']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset is', outlier)\n",
+        "data['DP'] = np.where(data['DP']>up_lim, up_lim, data['DP']) \n",
+        "data['DP'] = np.where(data['DP']<low_lim, low_lim, data['DP'])\n",
+        "outlier = []\n",
+        "for x in data['DP']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset after capping is', outlier)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "cRfXH-H4oF9L",
+        "outputId": "403ca591-3c7f-4a0e-898e-e0f2ebb9cd0d"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Q1= 152.0\n",
+            "Q2= 162.0\n",
+            "Q3= 174.0\n",
+            "Interquartile range is 22.0\n",
+            "low_limit is 119.0\n",
+            "up_limit is 207.0\n",
+            "outlier in the dataset is [213.0, 210.0, 210.0, 210.0, 210.0, 238.0, 238.0, 238.0, 238.0, 238.0, 238.0, 211.0, 211.0, 211.0, 211.0, 211.0, 228.0, 228.0, 228.0, 228.0, 228.0, 230.0, 230.0, 230.0]\n",
+            "outlier in the dataset after capping is []\n"
+          ]
+        }
+      ],
+      "source": [
+        "Q1 = np.percentile(data['Max'],25)\n",
+        "Q2 = np.percentile(data['Max'],50)\n",
+        "Q3 = np.percentile(data['Max'],75)\n",
+        "print('Q1=',Q1)\n",
+        "print('Q2=',Q2)\n",
+        "print('Q3=',Q3)\n",
+        "IQR = Q3 - Q1\n",
+        "print('Interquartile range is', IQR)\n",
+        "low_lim = Q1 - 1.5 * IQR\n",
+        "up_lim = Q3 + 1.5 * IQR\n",
+        "print('low_limit is',low_lim)\n",
+        "print('up_limit is',up_lim)\n",
+        "outlier = []\n",
+        "for x in data['Max']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset is', outlier)\n",
+        "data['Max'] = np.where(data['Max']>up_lim, up_lim, data['Max']) \n",
+        "data['Max'] = np.where(data['Max']<low_lim, low_lim, data['Max'])\n",
+        "outlier = []\n",
+        "for x in data['Max']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset after capping is', outlier)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "nBznc-1XoWxl",
+        "outputId": "0b2fc6d7-adb4-4ce6-856f-0e6f834cd2a7"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Q1= 2.0\n",
+            "Q2= 3.0\n",
+            "Q3= 6.0\n",
+            "Interquartile range is 4.0\n",
+            "low_limit is -4.0\n",
+            "up_limit is 12.0\n",
+            "outlier in the dataset is [13.0, 13.0, 13.0, 13.0, 13.0, 14.0, 13.0, 15.0, 16.0, 13.0, 13.0, 14.0, 16.0, 13.0, 14.0, 18.0, 14.0, 14.0, 13.0]\n",
+            "outlier in the dataset after capping is []\n"
+          ]
+        }
+      ],
+      "source": [
+        "Q1 = np.percentile(data['Nmax'],25)\n",
+        "Q2 = np.percentile(data['Nmax'],50)\n",
+        "Q3 = np.percentile(data['Nmax'],75)\n",
+        "print('Q1=',Q1)\n",
+        "print('Q2=',Q2)\n",
+        "print('Q3=',Q3)\n",
+        "IQR = Q3 - Q1\n",
+        "print('Interquartile range is', IQR)\n",
+        "low_lim = Q1 - 1.5 * IQR\n",
+        "up_lim = Q3 + 1.5 * IQR\n",
+        "print('low_limit is',low_lim)\n",
+        "print('up_limit is',up_lim)\n",
+        "outlier = []\n",
+        "for x in data['Nmax']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset is', outlier)\n",
+        "data['Nmax'] = np.where(data['Nmax']>up_lim, up_lim, data['Nmax']) \n",
+        "data['Nmax'] = np.where(data['Nmax']<low_lim, low_lim, data['Nmax'])\n",
+        "outlier = []\n",
+        "for x in data['Nmax']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset after capping is', outlier)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "YXxmS7F8opYx",
+        "outputId": "cd8983d2-bdcb-4dfb-ab00-23fe5417d5f6"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Q1= 0.0\n",
+            "Q2= 0.0\n",
+            "Q3= 0.0\n",
+            "Interquartile range is 0.0\n",
+            "low_limit is 0.0\n",
+            "up_limit is 0.0\n",
+            "outlier in the dataset is [1.0, 1.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 4.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 10.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 4.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 3.0, 2.0, 1.0, 8.0, 7.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 3.0, 2.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 5.0, 2.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 1.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 3.0, 1.0, 1.0, 1.0, 3.0, 3.0, 1.0, 2.0, 3.0, 3.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 3.0, 2.0, 3.0, 1.0, 2.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 1.0, 2.0, 1.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 3.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 2.0, 2.0, 1.0, 2.0, 1.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 3.0, 1.0, 1.0, 1.0, 3.0, 1.0, 1.0, 1.0, 3.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0, 1.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0]\n",
+            "outlier in the dataset after capping is []\n"
+          ]
+        }
+      ],
+      "source": [
+        "Q1 = np.percentile(data['Nzeros'],25)\n",
+        "Q2 = np.percentile(data['Nzeros'],50)\n",
+        "Q3 = np.percentile(data['Nzeros'],75)\n",
+        "print('Q1=',Q1)\n",
+        "print('Q2=',Q2)\n",
+        "print('Q3=',Q3)\n",
+        "IQR = Q3 - Q1\n",
+        "print('Interquartile range is', IQR)\n",
+        "low_lim = Q1 - 1.5 * IQR\n",
+        "up_lim = Q3 + 1.5 * IQR\n",
+        "print('low_limit is',low_lim)\n",
+        "print('up_limit is',up_lim)\n",
+        "outlier = []\n",
+        "for x in data['Nzeros']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset is', outlier)\n",
+        "data['Nzeros'] = np.where(data['Nzeros']>up_lim, up_lim, data['Nzeros']) \n",
+        "data['Nzeros'] = np.where(data['Nzeros']<low_lim, low_lim, data['Nzeros'])\n",
+        "outlier = []\n",
+        "for x in data['Nzeros']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset after capping is', outlier)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "2oZCVHH9o7Hq",
+        "outputId": "61f2483a-5970-4055-bc73-cc92c02d2941"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Q1= 129.0\n",
+            "Q2= 139.0\n",
+            "Q3= 148.0\n",
+            "Interquartile range is 19.0\n",
+            "low_limit is 100.5\n",
+            "up_limit is 176.5\n",
+            "outlier in the dataset is [76.0, 71.0, 75.0, 186.0, 186.0, 187.0, 186.0, 186.0, 186.0, 186.0, 180.0, 180.0, 180.0, 180.0, 90.0, 75.0, 75.0, 75.0, 97.0, 75.0, 75.0, 99.0, 99.0, 99.0, 99.0, 99.0, 86.0, 98.0, 95.0, 91.0, 91.0, 91.0, 91.0, 88.0, 91.0, 89.0, 89.0, 89.0, 88.0, 88.0, 88.0, 88.0, 88.0, 179.0, 91.0, 91.0, 86.0, 86.0, 86.0, 86.0, 86.0, 86.0, 86.0, 86.0, 86.0, 86.0, 67.0, 67.0, 67.0, 67.0, 67.0, 60.0, 60.0, 60.0, 60.0, 60.0, 60.0, 100.0, 100.0, 93.0, 93.0, 77.0, 69.0]\n",
+            "outlier in the dataset after capping is []\n"
+          ]
+        }
+      ],
+      "source": [
+        "Q1 = np.percentile(data['Mode'],25)\n",
+        "Q2 = np.percentile(data['Mode'],50)\n",
+        "Q3 = np.percentile(data['Mode'],75)\n",
+        "print('Q1=',Q1)\n",
+        "print('Q2=',Q2)\n",
+        "print('Q3=',Q3)\n",
+        "IQR = Q3 - Q1\n",
+        "print('Interquartile range is', IQR)\n",
+        "low_lim = Q1 - 1.5 * IQR\n",
+        "up_lim = Q3 + 1.5 * IQR\n",
+        "print('low_limit is',low_lim)\n",
+        "print('up_limit is',up_lim)\n",
+        "outlier = []\n",
+        "for x in data['Mode']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset is', outlier)\n",
+        "data['Mode'] = np.where(data['Mode']>up_lim, up_lim, data['Mode']) \n",
+        "data['Mode'] = np.where(data['Mode']<low_lim, low_lim, data['Mode'])\n",
+        "outlier = []\n",
+        "for x in data['Mode']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset after capping is', outlier)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "gwuTRvTMpYH3",
+        "outputId": "5dff8a0e-d980-4e2c-d0b0-c21dd7c16dc6"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Q1= 125.0\n",
+            "Q2= 136.0\n",
+            "Q3= 145.0\n",
+            "Interquartile range is 20.0\n",
+            "low_limit is 95.0\n",
+            "up_limit is 175.0\n",
+            "outlier in the dataset is [178.0, 180.0, 182.0, 90.0, 87.0, 91.0, 83.0, 87.0, 84.0, 78.0, 85.0, 82.0, 92.0, 93.0, 93.0, 85.0, 81.0, 83.0, 79.0, 76.0, 89.0, 88.0, 85.0, 83.0, 75.0, 94.0, 93.0, 94.0, 88.0, 90.0, 91.0, 88.0, 86.0, 84.0, 83.0, 85.0, 85.0, 82.0, 80.0, 80.0, 84.0, 92.0, 89.0, 94.0, 73.0]\n",
+            "outlier in the dataset after capping is []\n"
+          ]
+        }
+      ],
+      "source": [
+        "Q1 = np.percentile(data['Mean'],25)\n",
+        "Q2 = np.percentile(data['Mean'],50)\n",
+        "Q3 = np.percentile(data['Mean'],75)\n",
+        "print('Q1=',Q1)\n",
+        "print('Q2=',Q2)\n",
+        "print('Q3=',Q3)\n",
+        "IQR = Q3 - Q1\n",
+        "print('Interquartile range is', IQR)\n",
+        "low_lim = Q1 - 1.5 * IQR\n",
+        "up_lim = Q3 + 1.5 * IQR\n",
+        "print('low_limit is',low_lim)\n",
+        "print('up_limit is',up_lim)\n",
+        "outlier = []\n",
+        "for x in data['Mean']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset is', outlier)\n",
+        "data['Mean'] = np.where(data['Mean']>up_lim, up_lim, data['Mean']) \n",
+        "data['Mean'] = np.where(data['Mean']<low_lim, low_lim, data['Mean'])\n",
+        "outlier = []\n",
+        "for x in data['Mean']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset after capping is', outlier)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "JL05_cEwptBY",
+        "outputId": "92329b75-af0c-43fa-f52d-6b8b13521b69"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Q1= 129.0\n",
+            "Q2= 139.0\n",
+            "Q3= 148.0\n",
+            "Interquartile range is 19.0\n",
+            "low_limit is 100.5\n",
+            "up_limit is 176.5\n",
+            "outlier in the dataset is [180.0, 183.0, 186.0, 178.0, 177.0, 91.0, 78.0, 77.0, 86.0, 79.0, 95.0, 95.0, 94.0, 94.0, 97.0, 95.0, 98.0, 93.0, 95.0, 99.0, 100.0, 92.0, 87.0, 90.0, 82.0, 79.0, 92.0, 97.0]\n",
+            "outlier in the dataset after capping is []\n"
+          ]
+        }
+      ],
+      "source": [
+        "Q1 = np.percentile(data['Median'],25)\n",
+        "Q2 = np.percentile(data['Median'],50)\n",
+        "Q3 = np.percentile(data['Median'],75)\n",
+        "print('Q1=',Q1)\n",
+        "print('Q2=',Q2)\n",
+        "print('Q3=',Q3)\n",
+        "IQR = Q3 - Q1\n",
+        "print('Interquartile range is', IQR)\n",
+        "low_lim = Q1 - 1.5 * IQR\n",
+        "up_lim = Q3 + 1.5 * IQR\n",
+        "print('low_limit is',low_lim)\n",
+        "print('up_limit is',up_lim)\n",
+        "outlier = []\n",
+        "for x in data['Median']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset is', outlier)\n",
+        "data['Median'] = np.where(data['Median']>up_lim, up_lim, data['Median']) \n",
+        "data['Median'] = np.where(data['Median']<low_lim, low_lim, data['Median'])\n",
+        "outlier = []\n",
+        "for x in data['Median']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset after capping is', outlier)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "4e_Bn5OCp5fm",
+        "outputId": "b33f53ba-1824-472b-f41c-89bb9174891e"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Q1= 2.0\n",
+            "Q2= 7.0\n",
+            "Q3= 24.0\n",
+            "Interquartile range is 22.0\n",
+            "low_limit is -31.0\n",
+            "up_limit is 57.0\n",
+            "outlier in the dataset is [73.0, 170.0, 215.0, 76.0, 70.0, 138.0, 148.0, 73.0, 89.0, 66.0, 75.0, 72.0, 108.0, 86.0, 60.0, 117.0, 72.0, 137.0, 65.0, 136.0, 60.0, 70.0, 157.0, 106.0, 137.0, 177.0, 75.0, 72.0, 76.0, 62.0, 74.0, 69.0, 79.0, 65.0, 83.0, 79.0, 100.0, 137.0, 70.0, 75.0, 95.0, 75.0, 75.0, 61.0, 68.0, 104.0, 86.0, 76.0, 69.0, 103.0, 148.0, 129.0, 85.0, 72.0, 61.0, 72.0, 82.0, 70.0, 91.0, 90.0, 92.0, 64.0, 62.0, 79.0, 61.0, 63.0, 59.0, 127.0, 114.0, 65.0, 78.0, 79.0, 65.0, 92.0, 84.0, 94.0, 72.0, 70.0, 97.0, 80.0, 73.0, 59.0, 76.0, 71.0, 101.0, 74.0, 103.0, 126.0, 134.0, 144.0, 108.0, 66.0, 68.0, 73.0, 80.0, 87.0, 115.0, 83.0, 96.0, 76.0, 94.0, 72.0, 116.0, 61.0, 87.0, 97.0, 84.0, 73.0, 77.0, 119.0, 110.0, 63.0, 64.0, 59.0, 89.0, 98.0, 90.0, 85.0, 100.0, 103.0, 103.0, 113.0, 64.0, 59.0, 61.0, 59.0, 59.0, 59.0, 101.0, 70.0, 69.0, 61.0, 72.0, 148.0, 195.0, 182.0, 128.0, 88.0, 83.0, 109.0, 62.0, 75.0, 64.0, 64.0, 59.0, 109.0, 89.0, 98.0, 83.0, 68.0, 77.0, 80.0, 121.0, 113.0, 76.0, 72.0, 78.0, 61.0, 71.0, 94.0, 79.0, 94.0, 269.0, 250.0, 254.0, 243.0, 241.0, 190.0, 71.0, 70.0, 80.0, 79.0, 75.0, 90.0, 95.0, 95.0, 108.0, 74.0, 147.0, 114.0, 103.0, 95.0, 128.0, 71.0]\n",
+            "outlier in the dataset after capping is []\n"
+          ]
+        }
+      ],
+      "source": [
+        "Q1 = np.percentile(data['Variance'],25)\n",
+        "Q2 = np.percentile(data['Variance'],50)\n",
+        "Q3 = np.percentile(data['Variance'],75)\n",
+        "print('Q1=',Q1)\n",
+        "print('Q2=',Q2)\n",
+        "print('Q3=',Q3)\n",
+        "IQR = Q3 - Q1\n",
+        "print('Interquartile range is', IQR)\n",
+        "low_lim = Q1 - 1.5 * IQR\n",
+        "up_lim = Q3 + 1.5 * IQR\n",
+        "print('low_limit is',low_lim)\n",
+        "print('up_limit is',up_lim)\n",
+        "outlier = []\n",
+        "for x in data['Variance']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset is', outlier)\n",
+        "data['Variance'] = np.where(data['Variance']>up_lim, up_lim, data['Variance']) \n",
+        "data['Variance'] = np.where(data['Variance']<low_lim, low_lim, data['Variance'])\n",
+        "outlier = []\n",
+        "for x in data['Variance']:\n",
+        "  if((x > up_lim) or (x < low_lim)):\n",
+        "    outlier.append(x)\n",
+        "print('outlier in the dataset after capping is', outlier)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# Selecting only the attributes selected in feature selection"
+      ],
+      "metadata": {
+        "id": "vDEYzR0q50Rj"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "X = data[['CLASS','Median','Mean','ASTV','MSTV','MLTV','LBE','ALTV','UC','Tendency']]   \n",
+        "Y = data['NSP']\n",
+        "\n",
+        "from sklearn.preprocessing import StandardScaler\n",
+        "scaler = StandardScaler()\n",
+        "X_scaled = scaler.fit_transform(X)\n",
+        "X_scaled.shape"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "L9MnziX45z8c",
+        "outputId": "bd4bb8db-7396-4bae-8079-36a918b37c52"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "(2126, 10)"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 22
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "PrBxeDe8dr72"
+      },
+      "source": [
+        "# Split the dataset into train and test data"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "Y = pd.get_dummies(data.NSP)"
+      ],
+      "metadata": {
+        "id": "lgAjQN69a4eJ"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "Y"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 423
+        },
+        "id": "ouCNzSBWsW8g",
+        "outputId": "1b6b76ff-653d-4f1b-f65a-128e30d3eba9"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "      1.0  2.0  3.0\n",
+              "0       0    1    0\n",
+              "1       1    0    0\n",
+              "2       1    0    0\n",
+              "3       1    0    0\n",
+              "4       1    0    0\n",
+              "...   ...  ...  ...\n",
+              "2121    0    1    0\n",
+              "2122    0    1    0\n",
+              "2123    0    1    0\n",
+              "2124    0    1    0\n",
+              "2125    1    0    0\n",
+              "\n",
+              "[2126 rows x 3 columns]"
+            ],
+            "text/html": [
+              "\n",
+              "  <div id=\"df-5c47e1ae-31b8-41d5-9079-72aea1dc376b\">\n",
+              "    <div class=\"colab-df-container\">\n",
+              "      <div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>1.0</th>\n",
+              "      <th>2.0</th>\n",
+              "      <th>3.0</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>0</td>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>...</th>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2121</th>\n",
+              "      <td>0</td>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2122</th>\n",
+              "      <td>0</td>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2123</th>\n",
+              "      <td>0</td>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2124</th>\n",
+              "      <td>0</td>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2125</th>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "<p>2126 rows × 3 columns</p>\n",
+              "</div>\n",
+              "      <button class=\"colab-df-convert\" onclick=\"convertToInteractive('df-5c47e1ae-31b8-41d5-9079-72aea1dc376b')\"\n",
+              "              title=\"Convert this dataframe to an interactive table.\"\n",
+              "              style=\"display:none;\">\n",
+              "        \n",
+              "  <svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\"viewBox=\"0 0 24 24\"\n",
+              "       width=\"24px\">\n",
+              "    <path d=\"M0 0h24v24H0V0z\" fill=\"none\"/>\n",
+              "    <path d=\"M18.56 5.44l.94 2.06.94-2.06 2.06-.94-2.06-.94-.94-2.06-.94 2.06-2.06.94zm-11 1L8.5 8.5l.94-2.06 2.06-.94-2.06-.94L8.5 2.5l-.94 2.06-2.06.94zm10 10l.94 2.06.94-2.06 2.06-.94-2.06-.94-.94-2.06-.94 2.06-2.06.94z\"/><path d=\"M17.41 7.96l-1.37-1.37c-.4-.4-.92-.59-1.43-.59-.52 0-1.04.2-1.43.59L10.3 9.45l-7.72 7.72c-.78.78-.78 2.05 0 2.83L4 21.41c.39.39.9.59 1.41.59.51 0 1.02-.2 1.41-.59l7.78-7.78 2.81-2.81c.8-.78.8-2.07 0-2.86zM5.41 20L4 18.59l7.72-7.72 1.47 1.35L5.41 20z\"/>\n",
+              "  </svg>\n",
+              "      </button>\n",
+              "      \n",
+              "  <style>\n",
+              "    .colab-df-container {\n",
+              "      display:flex;\n",
+              "      flex-wrap:wrap;\n",
+              "      gap: 12px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert {\n",
+              "      background-color: #E8F0FE;\n",
+              "      border: none;\n",
+              "      border-radius: 50%;\n",
+              "      cursor: pointer;\n",
+              "      display: none;\n",
+              "      fill: #1967D2;\n",
+              "      height: 32px;\n",
+              "      padding: 0 0 0 0;\n",
+              "      width: 32px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert:hover {\n",
+              "      background-color: #E2EBFA;\n",
+              "      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);\n",
+              "      fill: #174EA6;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert {\n",
+              "      background-color: #3B4455;\n",
+              "      fill: #D2E3FC;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert:hover {\n",
+              "      background-color: #434B5C;\n",
+              "      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);\n",
+              "      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));\n",
+              "      fill: #FFFFFF;\n",
+              "    }\n",
+              "  </style>\n",
+              "\n",
+              "      <script>\n",
+              "        const buttonEl =\n",
+              "          document.querySelector('#df-5c47e1ae-31b8-41d5-9079-72aea1dc376b button.colab-df-convert');\n",
+              "        buttonEl.style.display =\n",
+              "          google.colab.kernel.accessAllowed ? 'block' : 'none';\n",
+              "\n",
+              "        async function convertToInteractive(key) {\n",
+              "          const element = document.querySelector('#df-5c47e1ae-31b8-41d5-9079-72aea1dc376b');\n",
+              "          const dataTable =\n",
+              "            await google.colab.kernel.invokeFunction('convertToInteractive',\n",
+              "                                                     [key], {});\n",
+              "          if (!dataTable) return;\n",
+              "\n",
+              "          const docLinkHtml = 'Like what you see? Visit the ' +\n",
+              "            '<a target=\"_blank\" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'\n",
+              "            + ' to learn more about interactive tables.';\n",
+              "          element.innerHTML = '';\n",
+              "          dataTable['output_type'] = 'display_data';\n",
+              "          await google.colab.output.renderOutput(dataTable, element);\n",
+              "          const docLink = document.createElement('div');\n",
+              "          docLink.innerHTML = docLinkHtml;\n",
+              "          element.appendChild(docLink);\n",
+              "        }\n",
+              "      </script>\n",
+              "    </div>\n",
+              "  </div>\n",
+              "  "
+            ]
+          },
+          "metadata": {},
+          "execution_count": 24
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "X"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 423
+        },
+        "id": "IC_XHsTMbExV",
+        "outputId": "8a97a837-c0c0-42e8-e670-e63a04664225"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "      CLASS  Median   Mean  ASTV  MSTV  MLTV    LBE  ALTV   UC  Tendency\n",
+              "0       9.0   121.0  137.0  73.0   0.5   2.4  120.0  27.5  0.0       1.0\n",
+              "1       6.0   140.0  136.0  17.0   2.1  10.4  132.0   0.0  4.0       0.0\n",
+              "2       6.0   138.0  135.0  16.0   2.1  13.4  133.0   0.0  5.0       0.0\n",
+              "3       6.0   137.0  134.0  16.0   2.4  20.1  134.0   0.0  6.0       1.0\n",
+              "4       2.0   138.0  136.0  16.0   2.4  19.9  132.0   0.0  5.0       1.0\n",
+              "...     ...     ...    ...   ...   ...   ...    ...   ...  ...       ...\n",
+              "2121    5.0   152.0  150.0  79.0   0.2   7.2  140.0  25.0  6.0       0.0\n",
+              "2122    5.0   151.0  148.0  78.0   0.4   7.1  140.0  22.0  9.0       1.0\n",
+              "2123    5.0   152.0  148.0  79.0   0.4   6.1  140.0  20.0  7.0       1.0\n",
+              "2124    5.0   151.0  147.0  78.0   0.4   7.0  140.0  27.0  9.0       1.0\n",
+              "2125    1.0   145.0  143.0  74.0   0.4   5.0  142.0  27.5  5.0       0.0\n",
+              "\n",
+              "[2126 rows x 10 columns]"
+            ],
+            "text/html": [
+              "\n",
+              "  <div id=\"df-4980f771-bd93-49fe-8f9c-6ee5449098e4\">\n",
+              "    <div class=\"colab-df-container\">\n",
+              "      <div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>CLASS</th>\n",
+              "      <th>Median</th>\n",
+              "      <th>Mean</th>\n",
+              "      <th>ASTV</th>\n",
+              "      <th>MSTV</th>\n",
+              "      <th>MLTV</th>\n",
+              "      <th>LBE</th>\n",
+              "      <th>ALTV</th>\n",
+              "      <th>UC</th>\n",
+              "      <th>Tendency</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>9.0</td>\n",
+              "      <td>121.0</td>\n",
+              "      <td>137.0</td>\n",
+              "      <td>73.0</td>\n",
+              "      <td>0.5</td>\n",
+              "      <td>2.4</td>\n",
+              "      <td>120.0</td>\n",
+              "      <td>27.5</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>1.0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>6.0</td>\n",
+              "      <td>140.0</td>\n",
+              "      <td>136.0</td>\n",
+              "      <td>17.0</td>\n",
+              "      <td>2.1</td>\n",
+              "      <td>10.4</td>\n",
+              "      <td>132.0</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>4.0</td>\n",
+              "      <td>0.0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>6.0</td>\n",
+              "      <td>138.0</td>\n",
+              "      <td>135.0</td>\n",
+              "      <td>16.0</td>\n",
+              "      <td>2.1</td>\n",
+              "      <td>13.4</td>\n",
+              "      <td>133.0</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>5.0</td>\n",
+              "      <td>0.0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>6.0</td>\n",
+              "      <td>137.0</td>\n",
+              "      <td>134.0</td>\n",
+              "      <td>16.0</td>\n",
+              "      <td>2.4</td>\n",
+              "      <td>20.1</td>\n",
+              "      <td>134.0</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>6.0</td>\n",
+              "      <td>1.0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>2.0</td>\n",
+              "      <td>138.0</td>\n",
+              "      <td>136.0</td>\n",
+              "      <td>16.0</td>\n",
+              "      <td>2.4</td>\n",
+              "      <td>19.9</td>\n",
+              "      <td>132.0</td>\n",
+              "      <td>0.0</td>\n",
+              "      <td>5.0</td>\n",
+              "      <td>1.0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>...</th>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2121</th>\n",
+              "      <td>5.0</td>\n",
+              "      <td>152.0</td>\n",
+              "      <td>150.0</td>\n",
+              "      <td>79.0</td>\n",
+              "      <td>0.2</td>\n",
+              "      <td>7.2</td>\n",
+              "      <td>140.0</td>\n",
+              "      <td>25.0</td>\n",
+              "      <td>6.0</td>\n",
+              "      <td>0.0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2122</th>\n",
+              "      <td>5.0</td>\n",
+              "      <td>151.0</td>\n",
+              "      <td>148.0</td>\n",
+              "      <td>78.0</td>\n",
+              "      <td>0.4</td>\n",
+              "      <td>7.1</td>\n",
+              "      <td>140.0</td>\n",
+              "      <td>22.0</td>\n",
+              "      <td>9.0</td>\n",
+              "      <td>1.0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2123</th>\n",
+              "      <td>5.0</td>\n",
+              "      <td>152.0</td>\n",
+              "      <td>148.0</td>\n",
+              "      <td>79.0</td>\n",
+              "      <td>0.4</td>\n",
+              "      <td>6.1</td>\n",
+              "      <td>140.0</td>\n",
+              "      <td>20.0</td>\n",
+              "      <td>7.0</td>\n",
+              "      <td>1.0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2124</th>\n",
+              "      <td>5.0</td>\n",
+              "      <td>151.0</td>\n",
+              "      <td>147.0</td>\n",
+              "      <td>78.0</td>\n",
+              "      <td>0.4</td>\n",
+              "      <td>7.0</td>\n",
+              "      <td>140.0</td>\n",
+              "      <td>27.0</td>\n",
+              "      <td>9.0</td>\n",
+              "      <td>1.0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2125</th>\n",
+              "      <td>1.0</td>\n",
+              "      <td>145.0</td>\n",
+              "      <td>143.0</td>\n",
+              "      <td>74.0</td>\n",
+              "      <td>0.4</td>\n",
+              "      <td>5.0</td>\n",
+              "      <td>142.0</td>\n",
+              "      <td>27.5</td>\n",
+              "      <td>5.0</td>\n",
+              "      <td>0.0</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "<p>2126 rows × 10 columns</p>\n",
+              "</div>\n",
+              "      <button class=\"colab-df-convert\" onclick=\"convertToInteractive('df-4980f771-bd93-49fe-8f9c-6ee5449098e4')\"\n",
+              "              title=\"Convert this dataframe to an interactive table.\"\n",
+              "              style=\"display:none;\">\n",
+              "        \n",
+              "  <svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\"viewBox=\"0 0 24 24\"\n",
+              "       width=\"24px\">\n",
+              "    <path d=\"M0 0h24v24H0V0z\" fill=\"none\"/>\n",
+              "    <path d=\"M18.56 5.44l.94 2.06.94-2.06 2.06-.94-2.06-.94-.94-2.06-.94 2.06-2.06.94zm-11 1L8.5 8.5l.94-2.06 2.06-.94-2.06-.94L8.5 2.5l-.94 2.06-2.06.94zm10 10l.94 2.06.94-2.06 2.06-.94-2.06-.94-.94-2.06-.94 2.06-2.06.94z\"/><path d=\"M17.41 7.96l-1.37-1.37c-.4-.4-.92-.59-1.43-.59-.52 0-1.04.2-1.43.59L10.3 9.45l-7.72 7.72c-.78.78-.78 2.05 0 2.83L4 21.41c.39.39.9.59 1.41.59.51 0 1.02-.2 1.41-.59l7.78-7.78 2.81-2.81c.8-.78.8-2.07 0-2.86zM5.41 20L4 18.59l7.72-7.72 1.47 1.35L5.41 20z\"/>\n",
+              "  </svg>\n",
+              "      </button>\n",
+              "      \n",
+              "  <style>\n",
+              "    .colab-df-container {\n",
+              "      display:flex;\n",
+              "      flex-wrap:wrap;\n",
+              "      gap: 12px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert {\n",
+              "      background-color: #E8F0FE;\n",
+              "      border: none;\n",
+              "      border-radius: 50%;\n",
+              "      cursor: pointer;\n",
+              "      display: none;\n",
+              "      fill: #1967D2;\n",
+              "      height: 32px;\n",
+              "      padding: 0 0 0 0;\n",
+              "      width: 32px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert:hover {\n",
+              "      background-color: #E2EBFA;\n",
+              "      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);\n",
+              "      fill: #174EA6;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert {\n",
+              "      background-color: #3B4455;\n",
+              "      fill: #D2E3FC;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert:hover {\n",
+              "      background-color: #434B5C;\n",
+              "      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);\n",
+              "      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));\n",
+              "      fill: #FFFFFF;\n",
+              "    }\n",
+              "  </style>\n",
+              "\n",
+              "      <script>\n",
+              "        const buttonEl =\n",
+              "          document.querySelector('#df-4980f771-bd93-49fe-8f9c-6ee5449098e4 button.colab-df-convert');\n",
+              "        buttonEl.style.display =\n",
+              "          google.colab.kernel.accessAllowed ? 'block' : 'none';\n",
+              "\n",
+              "        async function convertToInteractive(key) {\n",
+              "          const element = document.querySelector('#df-4980f771-bd93-49fe-8f9c-6ee5449098e4');\n",
+              "          const dataTable =\n",
+              "            await google.colab.kernel.invokeFunction('convertToInteractive',\n",
+              "                                                     [key], {});\n",
+              "          if (!dataTable) return;\n",
+              "\n",
+              "          const docLinkHtml = 'Like what you see? Visit the ' +\n",
+              "            '<a target=\"_blank\" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'\n",
+              "            + ' to learn more about interactive tables.';\n",
+              "          element.innerHTML = '';\n",
+              "          dataTable['output_type'] = 'display_data';\n",
+              "          await google.colab.output.renderOutput(dataTable, element);\n",
+              "          const docLink = document.createElement('div');\n",
+              "          docLink.innerHTML = docLinkHtml;\n",
+              "          element.appendChild(docLink);\n",
+              "        }\n",
+              "      </script>\n",
+              "    </div>\n",
+              "  </div>\n",
+              "  "
+            ]
+          },
+          "metadata": {},
+          "execution_count": 25
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.preprocessing import StandardScaler\n",
+        "scaler = StandardScaler()\n",
+        "X_scaled = scaler.fit_transform(X)\n",
+        "X_scaled.shape"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "1pgMVsilY7aH",
+        "outputId": "5a6483c2-ff9a-48cc-94e4-acd1d79dc853"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "(2126, 10)"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 26
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.model_selection import train_test_split\n",
+        "xtrain,xtest,ytrain,ytest = train_test_split(X_scaled,Y,test_size=0.2)"
+      ],
+      "metadata": {
+        "id": "jF6B0Eb7ZGX8"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import numpy as np\n",
+        "import matplotlib.pyplot as plt\n",
+        "import matplotlib.cm as cm\n",
+        "import random\n",
+        "from keras.models import Sequential\n",
+        "from keras.layers import Activation, Dropout, Flatten, Dense, LSTM, RepeatVector, TimeDistributed"
+      ],
+      "metadata": {
+        "id": "fDOGedXfGznz"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from keras.layers import Layer\n",
+        "from keras import backend as K\n",
+        "from tensorflow import keras"
+      ],
+      "metadata": {
+        "id": "VH8-lydRtvxJ"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "class RBFLayer(Layer):\n",
+        "    def __init__(self, units, gamma, **kwargs):\n",
+        "        super(RBFLayer, self).__init__(**kwargs)\n",
+        "        self.units = units\n",
+        "        self.gamma = K.cast_to_floatx(gamma)\n",
+        "\n",
+        "    def build(self, input_shape):\n",
+        "#         print(input_shape)\n",
+        "#         print(self.units)\n",
+        "        self.mu = self.add_weight(name='mu',\n",
+        "                                  shape=(int(input_shape[1]), self.units),\n",
+        "                                  initializer='uniform',\n",
+        "                                  trainable=True)\n",
+        "        super(RBFLayer, self).build(input_shape)\n",
+        "\n",
+        "    def call(self, inputs):\n",
+        "        diff = K.expand_dims(inputs) - self.mu\n",
+        "        l2 = K.sum(K.pow(diff, 2), axis=1)\n",
+        "        res = K.exp(-1 * self.gamma * l2)\n",
+        "        return res\n",
+        "\n",
+        "    def compute_output_shape(self, input_shape):\n",
+        "        return (input_shape[0], self.units)"
+      ],
+      "metadata": {
+        "id": "rGWpE79_vR6B"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "xtrain.shape"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "1nQ4cxEey3Zg",
+        "outputId": "86ed2346-5157-4ddf-c4bb-5b0bcbc2c24c"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "(1700, 10)"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 38
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "model = Sequential()\n",
+        "model.add(Dense(10, input_dim=10, activation='relu'))\n",
+        "model.add(RBFLayer(10, 0.5))\n",
+        "model.add(Dense(3, activation='softmax', name='foo'))"
+      ],
+      "metadata": {
+        "id": "af4taYnbxhkM"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])\n",
+        "early_stop = keras.callbacks.EarlyStopping(patience=20)\n",
+        "history = model.fit(xtrain,ytrain,validation_data=(xtest,ytest),epochs=100,callbacks=early_stop)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Y81msxxVywSD",
+        "outputId": "5ec9eaf9-e2ed-4c38-920f-4b6ef23ba5a0"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Epoch 1/100\n",
+            "54/54 [==============================] - 1s 4ms/step - loss: 0.1843 - accuracy: 0.7700 - val_loss: 0.1497 - val_accuracy: 0.8122\n",
+            "Epoch 2/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.1276 - accuracy: 0.7700 - val_loss: 0.1001 - val_accuracy: 0.8122\n",
+            "Epoch 3/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0957 - accuracy: 0.7700 - val_loss: 0.0754 - val_accuracy: 0.8122\n",
+            "Epoch 4/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0819 - accuracy: 0.7700 - val_loss: 0.0652 - val_accuracy: 0.8122\n",
+            "Epoch 5/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0755 - accuracy: 0.7700 - val_loss: 0.0605 - val_accuracy: 0.8122\n",
+            "Epoch 6/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0718 - accuracy: 0.7700 - val_loss: 0.0583 - val_accuracy: 0.8122\n",
+            "Epoch 7/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0692 - accuracy: 0.7700 - val_loss: 0.0564 - val_accuracy: 0.8122\n",
+            "Epoch 8/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0673 - accuracy: 0.7700 - val_loss: 0.0551 - val_accuracy: 0.8122\n",
+            "Epoch 9/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0655 - accuracy: 0.8341 - val_loss: 0.0536 - val_accuracy: 0.8944\n",
+            "Epoch 10/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0641 - accuracy: 0.8624 - val_loss: 0.0526 - val_accuracy: 0.9014\n",
+            "Epoch 11/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0627 - accuracy: 0.8653 - val_loss: 0.0515 - val_accuracy: 0.9038\n",
+            "Epoch 12/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0613 - accuracy: 0.8682 - val_loss: 0.0503 - val_accuracy: 0.9108\n",
+            "Epoch 13/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0601 - accuracy: 0.8700 - val_loss: 0.0496 - val_accuracy: 0.9085\n",
+            "Epoch 14/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0590 - accuracy: 0.8741 - val_loss: 0.0485 - val_accuracy: 0.9108\n",
+            "Epoch 15/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0578 - accuracy: 0.8747 - val_loss: 0.0477 - val_accuracy: 0.9131\n",
+            "Epoch 16/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0567 - accuracy: 0.8788 - val_loss: 0.0470 - val_accuracy: 0.9131\n",
+            "Epoch 17/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0556 - accuracy: 0.8794 - val_loss: 0.0458 - val_accuracy: 0.9131\n",
+            "Epoch 18/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0546 - accuracy: 0.8835 - val_loss: 0.0450 - val_accuracy: 0.9272\n",
+            "Epoch 19/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0534 - accuracy: 0.8894 - val_loss: 0.0441 - val_accuracy: 0.9366\n",
+            "Epoch 20/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0522 - accuracy: 0.8971 - val_loss: 0.0432 - val_accuracy: 0.9366\n",
+            "Epoch 21/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0510 - accuracy: 0.9053 - val_loss: 0.0422 - val_accuracy: 0.9460\n",
+            "Epoch 22/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0497 - accuracy: 0.9165 - val_loss: 0.0414 - val_accuracy: 0.9460\n",
+            "Epoch 23/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0482 - accuracy: 0.9300 - val_loss: 0.0402 - val_accuracy: 0.9460\n",
+            "Epoch 24/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0467 - accuracy: 0.9306 - val_loss: 0.0393 - val_accuracy: 0.9507\n",
+            "Epoch 25/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0451 - accuracy: 0.9329 - val_loss: 0.0382 - val_accuracy: 0.9507\n",
+            "Epoch 26/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0435 - accuracy: 0.9341 - val_loss: 0.0371 - val_accuracy: 0.9507\n",
+            "Epoch 27/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0422 - accuracy: 0.9365 - val_loss: 0.0360 - val_accuracy: 0.9507\n",
+            "Epoch 28/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0409 - accuracy: 0.9359 - val_loss: 0.0352 - val_accuracy: 0.9484\n",
+            "Epoch 29/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0398 - accuracy: 0.9371 - val_loss: 0.0347 - val_accuracy: 0.9484\n",
+            "Epoch 30/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0389 - accuracy: 0.9382 - val_loss: 0.0336 - val_accuracy: 0.9484\n",
+            "Epoch 31/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0380 - accuracy: 0.9359 - val_loss: 0.0331 - val_accuracy: 0.9484\n",
+            "Epoch 32/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0373 - accuracy: 0.9365 - val_loss: 0.0327 - val_accuracy: 0.9460\n",
+            "Epoch 33/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0366 - accuracy: 0.9365 - val_loss: 0.0319 - val_accuracy: 0.9484\n",
+            "Epoch 34/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0360 - accuracy: 0.9371 - val_loss: 0.0314 - val_accuracy: 0.9484\n",
+            "Epoch 35/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0355 - accuracy: 0.9371 - val_loss: 0.0311 - val_accuracy: 0.9507\n",
+            "Epoch 36/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0350 - accuracy: 0.9371 - val_loss: 0.0311 - val_accuracy: 0.9484\n",
+            "Epoch 37/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0346 - accuracy: 0.9382 - val_loss: 0.0308 - val_accuracy: 0.9484\n",
+            "Epoch 38/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0342 - accuracy: 0.9382 - val_loss: 0.0303 - val_accuracy: 0.9507\n",
+            "Epoch 39/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0338 - accuracy: 0.9382 - val_loss: 0.0307 - val_accuracy: 0.9460\n",
+            "Epoch 40/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0335 - accuracy: 0.9400 - val_loss: 0.0304 - val_accuracy: 0.9460\n",
+            "Epoch 41/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0333 - accuracy: 0.9406 - val_loss: 0.0298 - val_accuracy: 0.9484\n",
+            "Epoch 42/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0330 - accuracy: 0.9406 - val_loss: 0.0302 - val_accuracy: 0.9507\n",
+            "Epoch 43/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0329 - accuracy: 0.9400 - val_loss: 0.0295 - val_accuracy: 0.9507\n",
+            "Epoch 44/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0325 - accuracy: 0.9429 - val_loss: 0.0299 - val_accuracy: 0.9507\n",
+            "Epoch 45/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0323 - accuracy: 0.9424 - val_loss: 0.0295 - val_accuracy: 0.9507\n",
+            "Epoch 46/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0321 - accuracy: 0.9406 - val_loss: 0.0297 - val_accuracy: 0.9507\n",
+            "Epoch 47/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0320 - accuracy: 0.9424 - val_loss: 0.0292 - val_accuracy: 0.9507\n",
+            "Epoch 48/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0315 - accuracy: 0.9429 - val_loss: 0.0295 - val_accuracy: 0.9507\n",
+            "Epoch 49/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0313 - accuracy: 0.9429 - val_loss: 0.0292 - val_accuracy: 0.9507\n",
+            "Epoch 50/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0312 - accuracy: 0.9424 - val_loss: 0.0295 - val_accuracy: 0.9507\n",
+            "Epoch 51/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0310 - accuracy: 0.9435 - val_loss: 0.0289 - val_accuracy: 0.9531\n",
+            "Epoch 52/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0307 - accuracy: 0.9435 - val_loss: 0.0287 - val_accuracy: 0.9531\n",
+            "Epoch 53/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0305 - accuracy: 0.9429 - val_loss: 0.0288 - val_accuracy: 0.9507\n",
+            "Epoch 54/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0304 - accuracy: 0.9429 - val_loss: 0.0290 - val_accuracy: 0.9484\n",
+            "Epoch 55/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0302 - accuracy: 0.9441 - val_loss: 0.0289 - val_accuracy: 0.9507\n",
+            "Epoch 56/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0302 - accuracy: 0.9435 - val_loss: 0.0291 - val_accuracy: 0.9460\n",
+            "Epoch 57/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0300 - accuracy: 0.9435 - val_loss: 0.0287 - val_accuracy: 0.9484\n",
+            "Epoch 58/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0297 - accuracy: 0.9441 - val_loss: 0.0284 - val_accuracy: 0.9507\n",
+            "Epoch 59/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0296 - accuracy: 0.9441 - val_loss: 0.0283 - val_accuracy: 0.9507\n",
+            "Epoch 60/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0293 - accuracy: 0.9447 - val_loss: 0.0283 - val_accuracy: 0.9507\n",
+            "Epoch 61/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0292 - accuracy: 0.9447 - val_loss: 0.0284 - val_accuracy: 0.9531\n",
+            "Epoch 62/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0291 - accuracy: 0.9447 - val_loss: 0.0284 - val_accuracy: 0.9531\n",
+            "Epoch 63/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0290 - accuracy: 0.9459 - val_loss: 0.0284 - val_accuracy: 0.9507\n",
+            "Epoch 64/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0288 - accuracy: 0.9471 - val_loss: 0.0280 - val_accuracy: 0.9484\n",
+            "Epoch 65/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0286 - accuracy: 0.9488 - val_loss: 0.0282 - val_accuracy: 0.9460\n",
+            "Epoch 66/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0284 - accuracy: 0.9488 - val_loss: 0.0280 - val_accuracy: 0.9507\n",
+            "Epoch 67/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0283 - accuracy: 0.9518 - val_loss: 0.0278 - val_accuracy: 0.9484\n",
+            "Epoch 68/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0281 - accuracy: 0.9506 - val_loss: 0.0276 - val_accuracy: 0.9531\n",
+            "Epoch 69/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0279 - accuracy: 0.9506 - val_loss: 0.0279 - val_accuracy: 0.9460\n",
+            "Epoch 70/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0278 - accuracy: 0.9506 - val_loss: 0.0278 - val_accuracy: 0.9507\n",
+            "Epoch 71/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0277 - accuracy: 0.9512 - val_loss: 0.0277 - val_accuracy: 0.9507\n",
+            "Epoch 72/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0275 - accuracy: 0.9524 - val_loss: 0.0276 - val_accuracy: 0.9531\n",
+            "Epoch 73/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0274 - accuracy: 0.9518 - val_loss: 0.0277 - val_accuracy: 0.9484\n",
+            "Epoch 74/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0273 - accuracy: 0.9535 - val_loss: 0.0275 - val_accuracy: 0.9507\n",
+            "Epoch 75/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0272 - accuracy: 0.9524 - val_loss: 0.0271 - val_accuracy: 0.9531\n",
+            "Epoch 76/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0270 - accuracy: 0.9518 - val_loss: 0.0270 - val_accuracy: 0.9554\n",
+            "Epoch 77/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0268 - accuracy: 0.9553 - val_loss: 0.0273 - val_accuracy: 0.9484\n",
+            "Epoch 78/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0267 - accuracy: 0.9547 - val_loss: 0.0273 - val_accuracy: 0.9507\n",
+            "Epoch 79/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0267 - accuracy: 0.9529 - val_loss: 0.0269 - val_accuracy: 0.9531\n",
+            "Epoch 80/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0265 - accuracy: 0.9547 - val_loss: 0.0269 - val_accuracy: 0.9507\n",
+            "Epoch 81/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0264 - accuracy: 0.9547 - val_loss: 0.0267 - val_accuracy: 0.9531\n",
+            "Epoch 82/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0263 - accuracy: 0.9553 - val_loss: 0.0268 - val_accuracy: 0.9531\n",
+            "Epoch 83/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0261 - accuracy: 0.9559 - val_loss: 0.0267 - val_accuracy: 0.9531\n",
+            "Epoch 84/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0259 - accuracy: 0.9559 - val_loss: 0.0267 - val_accuracy: 0.9531\n",
+            "Epoch 85/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0257 - accuracy: 0.9565 - val_loss: 0.0265 - val_accuracy: 0.9554\n",
+            "Epoch 86/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0256 - accuracy: 0.9559 - val_loss: 0.0265 - val_accuracy: 0.9484\n",
+            "Epoch 87/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0254 - accuracy: 0.9565 - val_loss: 0.0263 - val_accuracy: 0.9531\n",
+            "Epoch 88/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0253 - accuracy: 0.9565 - val_loss: 0.0262 - val_accuracy: 0.9507\n",
+            "Epoch 89/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0252 - accuracy: 0.9565 - val_loss: 0.0262 - val_accuracy: 0.9507\n",
+            "Epoch 90/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0250 - accuracy: 0.9576 - val_loss: 0.0261 - val_accuracy: 0.9484\n",
+            "Epoch 91/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0248 - accuracy: 0.9576 - val_loss: 0.0259 - val_accuracy: 0.9484\n",
+            "Epoch 92/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0247 - accuracy: 0.9576 - val_loss: 0.0260 - val_accuracy: 0.9484\n",
+            "Epoch 93/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0246 - accuracy: 0.9594 - val_loss: 0.0261 - val_accuracy: 0.9484\n",
+            "Epoch 94/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0245 - accuracy: 0.9571 - val_loss: 0.0259 - val_accuracy: 0.9507\n",
+            "Epoch 95/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0243 - accuracy: 0.9588 - val_loss: 0.0257 - val_accuracy: 0.9507\n",
+            "Epoch 96/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0242 - accuracy: 0.9588 - val_loss: 0.0254 - val_accuracy: 0.9507\n",
+            "Epoch 97/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0241 - accuracy: 0.9600 - val_loss: 0.0254 - val_accuracy: 0.9507\n",
+            "Epoch 98/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0237 - accuracy: 0.9600 - val_loss: 0.0255 - val_accuracy: 0.9484\n",
+            "Epoch 99/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0236 - accuracy: 0.9600 - val_loss: 0.0252 - val_accuracy: 0.9484\n",
+            "Epoch 100/100\n",
+            "54/54 [==============================] - 0s 2ms/step - loss: 0.0235 - accuracy: 0.9612 - val_loss: 0.0253 - val_accuracy: 0.9484\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "model.summary()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "pRfWboCE0TVQ",
+        "outputId": "e41de5f1-e502-4447-d9e0-7c715883ea5d"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Model: \"sequential_5\"\n",
+            "_________________________________________________________________\n",
+            " Layer (type)                Output Shape              Param #   \n",
+            "=================================================================\n",
+            " dense_2 (Dense)             (None, 10)                110       \n",
+            "                                                                 \n",
+            " rbf_layer_2 (RBFLayer)      (None, 10)                100       \n",
+            "                                                                 \n",
+            " foo (Dense)                 (None, 3)                 33        \n",
+            "                                                                 \n",
+            "=================================================================\n",
+            "Total params: 243\n",
+            "Trainable params: 243\n",
+            "Non-trainable params: 0\n",
+            "_________________________________________________________________\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 279
+        },
+        "id": "a9CfQR3Yb6kU",
+        "outputId": "532f5a13-3750-4ac2-8fa8-229abea539e0"
+      },
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<Figure size 432x288 with 1 Axes>"
+            ],
+            "image/png": "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\n"
+          },
+          "metadata": {
+            "needs_background": "light"
+          }
+        }
+      ],
+      "source": [
+        "history_df = pd.DataFrame(history.history)\n",
+        "plt.plot(history_df.accuracy,label=\"Accuracy\")\n",
+        "plt.plot(history_df.val_accuracy,label=\"Validation Accuracy\")\n",
+        "plt.xlabel(\"Epochs\")\n",
+        "plt.ylabel(\"Accuracy\")\n",
+        "plt.legend()\n",
+        "plt.grid()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 279
+        },
+        "id": "9_KA4N4ub6kU",
+        "outputId": "b81bd605-8f37-456d-bcb5-c935cf4f42c5"
+      },
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<Figure size 432x288 with 1 Axes>"
+            ],
+            "image/png": "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\n"
+          },
+          "metadata": {
+            "needs_background": "light"
+          }
+        }
+      ],
+      "source": [
+        "history_df = pd.DataFrame(history.history)\n",
+        "plt.plot(history_df.loss,label=\"Loss\")\n",
+        "plt.plot(history_df.val_loss,label=\"Validation Loss\")\n",
+        "plt.xlabel(\"Epochs\")\n",
+        "plt.ylabel(\"Accuracy\")\n",
+        "plt.legend()\n",
+        "plt.grid()"
+      ]
+    }
+  ]
+}
